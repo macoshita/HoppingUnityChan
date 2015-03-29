@@ -46,14 +46,14 @@ public class PlayerControllerSetup : MonoBehaviour {
             animator.SetBool("Grounded", false);
 
 			// 着地判定
-			if (animator.GetBool("Jumping") && velocity.y < 0) {
+			if (jumpState == JumpState.Jumping && animator.GetBool("Jumping") && velocity.y < 0) {
 				var hit = new RaycastHit ();
 				if (Physics.Raycast (transform.position, Vector3.down, out hit)) {
-					Debug.Log(velocity.y * Time.deltaTime);
 					if (hit.distance < -velocity.y * 0.5f) {
 						animator.SetBool ("Jumping", false); // ジャンプモーション終了
 					}
 				}
+
 			}
 		}
 

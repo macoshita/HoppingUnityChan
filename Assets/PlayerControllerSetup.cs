@@ -13,11 +13,10 @@ public class PlayerControllerSetup : MonoBehaviour {
     // ジャンプ力
     float jumpSpeed = 0F;
 
-    JumpState jumpState = JumpState.None;
-
-	enum JumpState { None, WillJump, Jumping };
-
     private Animator animator;
+
+	JumpState jumpState = JumpState.Grounded;
+	enum JumpState { Grounded, WillJump, Jumping };
 
     // Use this for initialization
     void Start () {
@@ -27,33 +26,41 @@ public class PlayerControllerSetup : MonoBehaviour {
     
     // Update is called once per frame
     void Update () {
-        if (character.isGrounded) {
-			velocity = new Vector3(0, 0, 0);
-			animator.SetBool("Grounded", true);
-
-            if (jumpState == JumpState.None) {
-                if (Input.GetKey(KeyCode.Space)) {  // スペースキーを押し続けて
-                    jumpSpeed += 20F * Time.deltaTime;  // ジャンプ力をためる
-                }
-                if (Input.GetKeyUp(KeyCode.Space)) {    // スペースキーを離すと
-                    jumpState = JumpState.WillJump;
-                    animator.SetBool("Jumping", true); // ジャンプモーションに入る
-                }
-            } else if (jumpState == JumpState.Jumping) {
-				jumpState = JumpState.None;
+		if (jumpState == JumpState.Grounded) {
+			// 着地状態ならジャンプできる
+			if (Input.GetKeyDown (KeyCode.Space)) {
+				// スペースキーを押したらジャンプの準備
+				jumpState = JumpState.WillJump;
 			}
-        } else {
-            animator.SetBool("Grounded", false);
-
-			// 着地判定
-			if (jumpState == JumpState.Jumping && animator.GetBool("Jumping") && velocity.y < 0) {
-				var hit = new RaycastHit ();
-				if (Physics.Raycast (transform.position, Vector3.down, out hit)) {
-					if (hit.distance < -velocity.y * 0.5f) {
-						animator.SetBool ("Jumping", false); // ジャンプモーション終了
-					}
+		} else if (jumpState == JumpState.WillJump) {
+			if (Input.GetKey (KeyCode.Space)) {
+				// スペースキーを押し続けてジャンプ力を溜める
+				jumpSpeed += 20F * Time.deltaTime;
+				if (jumpSpeed > 15f) {
+					// 一定量以上は溜まらない
+					jumpSpeed = 15f;
 				}
+				
+			} else {
+				// スペースキーを離したらジャンプ
+				animator.speed = 1f;
+			}
+		} else if (jumpState == JumpState.Jumping) {
+			if (character.isGrounded) {
+				velocity = new Vector3(0, 0, 0);
+				jumpState = JumpState.Grounded;
+			}
+		}
 
+		if (jumpState == JumpState.Grounded) {
+			animator.speed = 1f;
+			animator.SetBool ("Falling", false);
+		} else if (jumpState == JumpState.WillJump) {
+			animator.SetBool ("WillJump", true);	
+		} else if (jumpState == JumpState.Jumping) {
+			animator.SetBool ("WillJump", false);
+			if (velocity.y < 0) {
+				animator.SetBool ("Falling", true);
 			}
 		}
 
@@ -62,14 +69,31 @@ public class PlayerControllerSetup : MonoBehaviour {
         CollisionFlags flag = character.Move (velocity * Time.deltaTime);
     }
 
-    // 足が離れる直前に呼び出される
-    void OnJumpStart()
+	void OnJumpStart()
+	{
+		animator.speed = 0.25f;
+	}
+
+	void OnMaxJump()
+	{
+		if (jumpState == JumpState.WillJump) {
+			animator.speed = 0;
+		}
+	}
+
+    void OnLeaveFeet()
     {
-        velocity = new Vector3(0, jumpSpeed + 7F, 4F);
-		CollisionFlags flag = character.Move(velocity * Time.deltaTime);
-        jumpSpeed = 0F;
+		velocity = new Vector3(0, jumpSpeed + 5F, 4F);
+		jumpSpeed = 0F;
+		CollisionFlags flag = character.Move (velocity * Time.deltaTime);
 		jumpState = JumpState.Jumping;
-    }
+	}
 
-
+	// アニメーション的に完全に落ちはじめた時に呼び出される
+	void OnFalling()
+	{
+		if (jumpState == JumpState.Jumping) {
+			animator.speed = 0f;
+		}
+	}
 }

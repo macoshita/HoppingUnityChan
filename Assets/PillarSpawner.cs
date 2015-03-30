@@ -10,7 +10,7 @@ public class PillarSpawner : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        for (int i = 0; i < 50; i++)
+        for (int i = 0; i < 20; i++)
         {
             Spawn();
         }
@@ -18,10 +18,10 @@ public class PillarSpawner : MonoBehaviour {
 
     void Spawn()
     {
-        float y = Random.Range(0f, 5f);
-        y = 0f;
-        Instantiate(pillar, new Vector3(0, y, z), Quaternion.identity);
-        z += 1f;
-//        z += Random.Range(3f, 10f);
-    }
+        //float y = Random.Range(0f, 5f);
+		float y = 0f;
+		Instantiate(pillar, new Vector3(0, y, z), Quaternion.identity);
+    //    z += Random.Range(3f, 8f);
+		z += 1f;
+	}
 }
